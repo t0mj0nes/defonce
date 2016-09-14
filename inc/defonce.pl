@@ -107,24 +107,25 @@ define([SDI     => [-BASE       => 0xFF00,                              # 'BASE'
                                    ]
                    ],
        ]);
-define([
-        REFRESH => [-BASE       => 0xFF10,
+
+# define a type
+define([RETENTION    => [-BITS    => 2,             # Retention
+                         -ENUM    => ['2MS',        #  0: 2.0ms
+                                      '3MS5',       #  1: 3.5ms
+                                      '5MS',        #  2: 5.0ms
+                                      '6MS5'],      #  3: 6.5ms
+                         -DEFAULT => 1]]);          #  default: 3.5ms
+
+define([REFRESH => [-BASE       => 0xFF10,
                     -BITS       => 16,
-                    CSR         => [-BITS       => 8,                   # bits for regs
-                                    RETENTION   => [-BITS    => 2,      # Retention
-                                                    -ENUM    => ['2MS',   #  2.0ms
-                                                                 '3MS5',  #  3.5ms
-                                                                 '5MS',   #  5.0ms
-                                                                 '6MS5']],#  6.5ms
-                                    RFRATE      => [-BITS    => 2,      # Refresh rate
-                                                    1        => 0,      #   1 block/refresh
-                                                    2        => 1,      #   2 block/refresh
-                                                    4        => 2,      #   4 block/refresh
-                                                    8        => 3],     #   8 block/refresh
-                                   NO_QUEUE     => [-BITS    => 1],     # No refresh request queuing
-                                   SPEEDUP      => [-BITS    => 1],     # Speed up refreshes for clock switching
-                                   DISABLE      => [-BITS    => 1],     # Disable refresh (if debugMode) for debug purposes
-                                   TIMEOUT      => [-BITS    => 1],     # Refresh timeout detected (read-only)
+                    CSR         => [-BITS       => 8,                       # bits for regs
+                                   RETENTION1   => [-SUB    => RETENTION],  # Retention 1 - subordinate types
+                                   RETENTION2   => [-SUB    => RETENTION],  # Retention 2     adopt the local name
+                                   NO_QUEUE     => [-BITS    => 1],         # No refresh request queuing
+                                   SPEEDUP      => [-BITS    => 1],         # Speed up refreshes for clock switching
+                                   DISABLE      => [-BITS    => 1],         # Disable refresh (if debugMode) for debug purposes
+                                   TIMEOUT      => [-BITS    => 1],         # Refresh timeout detected (read-only)
+                                   -DEFAULT     => 0x05,                    # Common default TODO: remove this req.
                                   ]
                    ]
         ]);

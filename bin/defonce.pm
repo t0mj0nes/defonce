@@ -1,4 +1,5 @@
-# Copyright (c) 2009, Thomas C. Jones and Echelon Corporation
+# Copyright (c) 2010-2016 Thomas C. Jones 
+# Copyright (c) 2009 Echelon Corporation
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -53,7 +54,7 @@ defonce - or "define once" - create definitions for constants in defonce and gen
 Version 1.1
 
 =cut
-our $VERSION   = '$Revision: 1.28 $';
+our $VERSION   = '$Revision: 5 $';
     $VERSION   =~ s/.*: //;
     $VERSION   =~ s/ .*//;
 
@@ -118,6 +119,7 @@ use Data::Dumper;
 #    -CARDINAL   - this is a cardinal number
 #    -OFFSET     - offset from base
 #    -ENUM       - enumerate
+#    -SUB        - subordinate type
 
 sub define {
     # parameters
@@ -182,7 +184,8 @@ sub define {
         } elsif(ref($value) eq "ARRAY") {
 
             # parse through array, converting to hash (ref)
-            $definition->{$name} = _parse($value);
+            $definition->{$name}         = _parse($value);
+            $defonce::definitions{$name} = $definition->{$name};
             _elaborate($definition, $definition->{$name}, 0);
             _define($definition->{$name}, $name);
 
@@ -376,6 +379,9 @@ sub _parse {
                     push @{$hash{_ORDER}}, "$value";
                     $hash{$value} = $value;
                 }
+            }elsif($name eq "-SUB") {
+                unless(exists $defonce::definitions{$value}) { die("Define -SUB $name does not exist.\n"); }
+                return _subordinate($defonce::definitions{$value});
             } else {
                 $hash{$name} = $value;
             }
@@ -424,6 +430,39 @@ sub _enumerate {
         $href->{$name} = $value++;
     }
 }#_enumerate
+
+
+# private function to _subordinate a predefined type
+# Because it is fully _elaborated and _defined it is necessary
+# to strip the keywords that fully define it (lo, hi, up)
+# Added the recursive call for hash subfields but I don't think it
+# is needed.  Other types (scalars and arrays) are just copied over
+sub _subordinate {
+    my ($href) = @_;        # hash ref to pre-defined data type
+
+    my $key;                # each entry in hash
+    my $value;              # each value
+    my $name;               # each entry in an array
+    my $hrefout;            # hash reference to construct
+    my $tn;                 # temporary name - to sanity-check update name
+    my $tv;                 # temporary value - to sanity-check update value
+
+    foreach $key (keys %{$href}) {
+
+        if($key eq "-LO" ||
+           $key eq "-HI" ||
+           $key eq "_UP") { next; }
+
+        if(ref($key) eq "HASH") { 
+            $hrefout->{$key} = _subordinate($href->{$key});
+            next;
+        }
+
+        # Otherwise, just copy scalar or array
+        $hrefout->{$key} = $href->{$key}
+    }
+    return $hrefout;
+}#_subordinate
 
 
 # private function to elaborate a hash reference, filling out bit widths, defaults, masks, etc.
