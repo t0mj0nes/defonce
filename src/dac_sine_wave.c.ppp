@@ -1,0 +1,62 @@
+/*
+ * Description:
+ *   Demonstrates PPP and using a defonce file
+ *   Lines that start with '!' are Perl
+ *   Otherwise, lines are passed to the output file unchanged
+ *   To use a variable in non-Perl code escape it:
+ *
+ * Perl can go anywhere - in the middle of output file language comments
+!@array     = ('a', 'b', 'c');
+!$variable  = 123;
+!%hash      = ('d' => 'e');
+!$entry     = 'd';
+ *
+ *      \@array 
+ *      \$variable              Go checkout _dac_sine_wave.c now!
+ *      \%hash 
+ *      \$hash\{\$entry\} etc
+ *
+ *   'FILE_OUT' is the output file handle 
+ *
+ *   See ../bin/ppp.pl header for more details   
+ */
+
+#include "../inc/_dac.h"    // contains DAC params (e.g. reg spec) for C
+
+signed int sine_wave[] = { 
+!BEGIN{push @INC, "../inc"};
+!require "_dac.ph";         # contains DAC params in Perl, etc.
+!
+!# Tx DAC specific
+!$DAC_FULL_SCALE  = 1<<(&DAC_BITS);
+!$DAC_MID_SCALE   = 1<<(&DAC_HI);
+!
+!# Sine wave parameters
+!$pi                 = 3.1415926;
+!$k                  = 1E3; 
+!$m                  = 1E6; 
+!$amplitude          = $DAC_MID_SCALE;
+!$frequency          = 130.0*$k; #Hz
+!$clock              = 5.0*$m;   #Hz
+!$entries            = $clock/$frequency;
+!$cycles             = 13.0;
+!$samples            = $entries*$cycles;
+!
+!for($i=0;$i<$samples;$i++) {
+!    printf FILE_OUT "    %d,\n", $DAC_MID_SCALE + sin(($i/$entries)*2*$pi)*$amplitude;
+!}
+};
+
+int main() {
+
+    int ptr = 0;
+    while(1) { // run forever
+        while(reg_dac_status & REG_DAC_STATUS_BUSY);    // wait 'til not busy
+        reg_dac_data = (int) sine_wave[ptr]; 
+        ptr = ptr+1 % sizeof(sine_wave);
+    }
+        
+}
+
+
+
