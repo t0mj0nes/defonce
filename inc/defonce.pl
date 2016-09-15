@@ -23,7 +23,7 @@
 BEGIN{push @INC, "../bin"}; # specify a relative path from where ever you are
 
 # use it
-use defonce;
+use defonce 6;
 
 # use anything else in Perl you desire
 use Data::Dumper;
@@ -89,6 +89,7 @@ define([SDI     => [-BASE       => 0xFF00,                              # 'BASE'
                     -BITS       => 16,                                  # BITS here indicate the ADDRESS size
                     VERSION     => [-BITS       => 8,                   # BITS here are for the regs size (known redudancy)
                                     XCVR        => [-BITS    => 4,      # Transceiver Type
+                                                    -TYPE    => RW,     #   Custom keywords (for future output file formats)
                                                     -ENUM    => [NONE,     # None
                                                                  FT,       # Free Topology
                                                                  PL,       # Power Line
@@ -96,10 +97,11 @@ define([SDI     => [-BASE       => 0xFF00,                              # 'BASE'
                                                                  [XL=>9]]],# Bogus
                                    VER          => [-BITS    => 4]],    # SDI Version
                     CLOCK_RATE  => [MAX         => [-BITS    => 3,      # Max Clock Rate
+                                                    -ACCESS  => RW,     #   More custom keywords (for future output file formats)
                                                     '2M5'    => 0,      #   2.5MHz
                                                     '5M'     => 1,      #   5MHz
                                                     '10M'    => 2,      #   10MHz
-                                                    '20M'    => 3,      #   20MHz
+                                                    '20M'    => 3,      "#   20MHz",    # pass comments along (also a future type)
                                                     '40M'    => 4,      #   40MHz
                                                     '80M'    => 5,      #   80MHz
                                                     '160M'   => 6,      #   160MHz
@@ -125,7 +127,6 @@ define([REFRESH => [-BASE       => 0xFF10,
                                    SPEEDUP      => [-BITS    => 1],         # Speed up refreshes for clock switching
                                    DISABLE      => [-BITS    => 1],         # Disable refresh (if debugMode) for debug purposes
                                    TIMEOUT      => [-BITS    => 1],         # Refresh timeout detected (read-only)
-                                   -DEFAULT     => 0x05,                    # Common default TODO: remove this req.
                                   ]
                    ]
         ]);

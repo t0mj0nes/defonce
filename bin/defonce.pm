@@ -54,9 +54,7 @@ defonce - or "define once" - create definitions for constants in defonce and gen
 Version 1.1
 
 =cut
-our $VERSION   = '$Revision: 5 $';
-    $VERSION   =~ s/.*: //;
-    $VERSION   =~ s/ .*//;
+our $VERSION   = '6';
 
 use base 'Exporter';
 
@@ -120,6 +118,7 @@ use Data::Dumper;
 #    -OFFSET     - offset from base
 #    -ENUM       - enumerate
 #    -SUB        - subordinate type
+#    -...        - any -{name} will be added to structure but not use until future apps
 
 sub define {
     # parameters
@@ -351,6 +350,7 @@ sub _parse {
     # locals - really local because it is recursive
     my $name;
     my $value;
+    my $comment = "";
     my %hash;
 
     # sanity-check input
@@ -358,17 +358,22 @@ sub _parse {
 
     # cycle through each name/value pair
     while (@{$aref}) {
-        $name  = shift @{$aref};
-        $value = shift @{$aref};
+        if(${$aref}[0] =~ /^#/) { $comment  = shift @{$aref}; }
+        else                    { $name     = shift @{$aref}; }
+        if(${$aref}[0] =~ /^#/) { $comment  = shift @{$aref}; }
+        else                    { $value    = shift @{$aref}; }
+        if(@{$aref} && ${$aref}[0] =~ /^#/) { $comment  = shift @{$aref}; }
+        
         if(ref($name) ne "") { die("Always use names in LHS\n"); }
 
         # 'DEFAULT' is a special case - may use either 'DEFAULT' or '-DEFAULT'
         if($name eq "-DEFAULT") { $name = "DEFAULT"; }
 
-        # If not these keyword save it in the order array (e.g. DEFAULT is OK)
+        # If not keyword save it in the order array (e.g. DEFAULT is OK)
         unless($name =~ /^-/) {
             push @{$hash{_ORDER}}, $name;
         }
+
 
         if(ref($value) eq "") {
             # See if default-type enumeration
@@ -393,6 +398,13 @@ sub _parse {
             } else {
                 $hash{$name} = _parse($value);
             }
+        }
+
+        # Queue comment if applicable
+        if($comment ne "") {
+            $comment               =~ s/#[ ]//;
+            $hash{-COMMENT}{$name} =  $comment;
+            $comment               =  "";
         }
     }
     return \%hash;
@@ -597,6 +609,7 @@ sub _define {
         $href->{DEFAULT} = 0;
         if(exists $href->{_ORDER}) {
             foreach $field (@{$href->{_ORDER}}) {
+                if($field eq "_ADDRESS" || $field eq "OFFSET") { next; }
                 if(ref($href->{$field}) && exists $href->{$field}->{DEFAULT} && exists $href->{$field}->{-LO}) {
                     $href->{DEFAULT} |= $href->{$field}->{DEFAULT} << $href->{$field}->{-LO};
                 } elsif($href->{DEFAULT}) {
