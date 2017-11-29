@@ -693,7 +693,7 @@ sub _define {
             if(!exists $href->{-BASE}) {
                 print {$defonce::handles{VH}}  "\n";
                 print {$defonce::handles{VH}}  "`ifdef _SYSTEMVERILOG\n";
-                print {$defonce::handles{VH}}  "typedef reg [`${prefix}_RANGE] T_${prefix};\n";
+                print {$defonce::handles{VH}}  "typedef logic [`${prefix}_RANGE] T_${prefix};\n";
                 print {$defonce::handles{VH}}  "`endif // _SYSTEMVERILOG\n";
                 print {$defonce::handles{VH}}  "\n";
             }# no BASE
